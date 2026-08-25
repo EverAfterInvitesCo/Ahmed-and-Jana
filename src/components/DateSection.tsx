@@ -11,45 +11,37 @@ export const DateSection = ({ data }: DateSectionProps) => {
   const [calendarAdded, setCalendarAdded] = useState(false);
 
   const handleAddToCalendar = () => {
-    const now = new Date();
+    // Wedding: January 21, 2027
+    // 6:00 PM Cairo time = 4:00 PM UTC
+    // End: 12:00 AM Cairo time = 10:00 PM UTC
 
-    // Generate current timestamp for the iCalendar file
-    const dtStamp = now
-      .toISOString()
-      .replace(/[-:]/g, '')
-      .replace(/\.\d{3}/, '');
-
-    const groomName = `${data.groom.firstName} ${
-      data.groom.lastName || ''
-    }`.trim();
-
-    const brideName = `${data.bride.firstName} ${
-      data.bride.lastName || ''
-    }`.trim();
-
-    // Generate RFC 5545 compliant iCalendar (.ics) file
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//EverAfterInvites//Wedding Invitation//EN',
+      'PRODID:-//EverAfterInvites//Wedding//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
 
       'BEGIN:VEVENT',
 
-      `UID:wedding-${data.groom.firstName.toLowerCase()}-${data.bride.firstName.toLowerCase()}-20270121@everafterinvites.com`,
+      'UID:ahmed-jana-wedding-20270121@everafterinvites.com',
 
-      `DTSTAMP:${dtStamp}`,
+      `DTSTAMP:${formatICSDate(new Date())}`,
 
-      // Wedding date and time — Cairo local time
-      'DTSTART;TZID=Africa/Cairo:20270121T180000',
-      'DTEND;TZID=Africa/Cairo:20270122T000000',
+      'DTSTART:20270121T160000Z',
+      'DTEND:20270121T220000Z',
 
-      `SUMMARY:Wedding of ${data.groom.firstName} & ${data.bride.firstName}`,
+      `SUMMARY:Wedding of ${escapeICS(
+        data.groom.firstName
+      )} & ${escapeICS(data.bride.firstName)}`,
 
-      `DESCRIPTION:Join ${groomName} & ${brideName} in celebrating their wedding day.`,
+      `DESCRIPTION:Join ${escapeICS(
+        data.groom.firstName
+      )} & ${escapeICS(
+        data.bride.firstName
+      )} in celebrating their wedding day.`,
 
-      'LOCATION:Cairo, Egypt',
+      'LOCATION:Cairo\\, Egypt',
 
       'STATUS:CONFIRMED',
       'SEQUENCE:0',
@@ -58,24 +50,32 @@ export const DateSection = ({ data }: DateSectionProps) => {
       'END:VCALENDAR',
     ].join('\r\n');
 
-    // Create the .ics file
-    const blob = new Blob([icsContent], {
+    // Add a final newline — some calendar apps require it
+    const finalICS = icsContent + '\r\n';
+
+    const blob = new Blob([finalICS], {
       type: 'text/calendar;charset=utf-8',
     });
 
-    const url = window.URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${data.groom.firstName}_and_${data.bride.firstName}_Wedding.ics`;
+    link.download = 'Ahmed_and_Jana_Wedding.ics';
+
+    // Important for mobile browsers
+    link.style.display = 'none';
 
     document.body.appendChild(link);
     link.click();
+
     document.body.removeChild(link);
 
-    window.URL.revokeObjectURL(url);
+    // Give the browser time to start the download
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
 
-    // Show confirmation
     setCalendarAdded(true);
 
     setTimeout(() => {
@@ -90,7 +90,7 @@ export const DateSection = ({ data }: DateSectionProps) => {
     >
       <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
 
-        {/* Enormous Serif Typography */}
+        {/* Date */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -102,7 +102,7 @@ export const DateSection = ({ data }: DateSectionProps) => {
           className="space-y-2 sm:space-y-4 select-none"
         >
 
-          {/* Day number */}
+          {/* Day */}
           <div className="leading-none">
             <span className="text-8xl sm:text-9xl md:text-[13rem] lg:text-[15rem] font-serif font-light text-[#252320] tracking-tight block">
               {data.date.day}
@@ -123,7 +123,7 @@ export const DateSection = ({ data }: DateSectionProps) => {
             </span>
           </div>
 
-          {/* Time Display */}
+          {/* Time */}
           <div className="pt-6 sm:pt-8">
             <p className="text-xs sm:text-sm md:text-base font-sans tracking-[0.35em] text-[#252320]/75 uppercase font-medium">
               {data.date.dayOfWeek} · {data.date.time || '6:00 PM'}
@@ -131,7 +131,7 @@ export const DateSection = ({ data }: DateSectionProps) => {
           </div>
         </motion.div>
 
-        {/* Calendar Add Action */}
+        {/* Save The Date */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -165,3 +165,20 @@ export const DateSection = ({ data }: DateSectionProps) => {
     </section>
   );
 };
+
+// Format a JavaScript Date into RFC 5545 UTC format
+function formatICSDate(date: Date): string {
+  return date
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
+}
+
+// Escape special characters required by iCalendar
+function escapeICS(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
+}

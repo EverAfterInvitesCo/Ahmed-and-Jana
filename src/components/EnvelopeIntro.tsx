@@ -121,22 +121,15 @@ export const EnvelopeIntro = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 onClick={handleTapToPlay}
-                className="absolute inset-0 bg-black/65 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer text-white gap-4 z-20"
+                className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer text-white z-20"
               >
                 <button
                   type="button"
                   className="w-20 h-20 rounded-full bg-[#FAF8F3] text-[#1C1A18] flex items-center justify-center shadow-2xl hover:scale-105 transition-transform"
+                  aria-label="Play video"
                 >
                   <Play className="w-8 h-8 fill-current ml-1" />
                 </button>
-                <div className="text-center space-y-1">
-                  <p className="font-serif text-sm tracking-[0.25em] uppercase text-[#FAF8F3]">
-                    Tap to Open Invitation
-                  </p>
-                  <p className="text-[10px] font-sans tracking-[0.2em] text-[#FAF8F3]/60 uppercase">
-                    Unsealing with sound
-                  </p>
-                </div>
               </motion.div>
             )}
 
