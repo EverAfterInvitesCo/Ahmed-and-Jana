@@ -78,7 +78,7 @@ export const EnvelopeIntro = ({
       if (!hasEndedRef.current) {
         handleTriggerFadeIntoSite();
       }
-    }, 3800);
+    }, 8000);
 
     return () => {
       video.removeEventListener('loadeddata', startPlaying);
@@ -131,6 +131,7 @@ export const EnvelopeIntro = ({
           <div className="relative w-full h-full flex items-center justify-center p-0 md:p-4">
             <video
               ref={videoRef}
+              src="/Envelope.mp4"
               autoPlay
               playsInline
               muted
@@ -138,16 +139,12 @@ export const EnvelopeIntro = ({
               loop={false}
               onTimeUpdate={handleTimeUpdate}
               onEnded={handleTriggerFadeIntoSite}
-              onError={() => {
-                // If media cannot load, immediately transition so user is never stuck
-                handleTriggerFadeIntoSite();
-              }}
               className={`w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain transition-all duration-700 ${
                 isFadingOut ? 'opacity-0 scale-[1.02]' : 'opacity-100'
               }`}
             >
-              <source src="/media/Envelope.mp4" type="video/mp4" />
               <source src="/Envelope.mp4" type="video/mp4" />
+              <source src="/media/Envelope.mp4" type="video/mp4" />
             </video>
 
             {/* Discreet Skip Button */}
