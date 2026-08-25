@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, type MouseEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Volume2, VolumeX, ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, Play } from 'lucide-react';
 
 interface EnvelopeIntroProps {
   isOpen: boolean;
@@ -12,153 +12,151 @@ export const EnvelopeIntro = ({
   onOpenInvitation,
 }: EnvelopeIntroProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [needsUserTap, setNeedsUserTap] = useState(false);
+  const [needsGesture, setNeedsGesture] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Attempt autoplay when intro opens
+  // Attempt unmuted automatic playback on mount
   useEffect(() => {
     if (!isOpen) return;
 
-    const playVideo = async () => {
-      if (videoRef.current) {
-        try {
-          videoRef.current.currentTime = 0;
-          await videoRef.current.play();
-          setIsPlaying(true);
-          setNeedsUserTap(false);
-        } catch {
-          // If browser blocked unmuted autoplay, try muted autoplay first
+    const startVideoWithAudio = async () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      video.muted = false;
+      video.volume = 1.0;
+
+      try {
+        await video.play();
+        setIsPlaying(true);
+        setNeedsGesture(false);
+      } catch {
+        // Browser requires a user gesture before starting unmuted audio
+        setNeedsGesture(true);
+
+        // One-time listener: any tap/touch immediately starts playback with sound
+        const handleFirstInteraction = async () => {
           if (videoRef.current) {
             try {
-              videoRef.current.muted = true;
-              setIsMuted(true);
+              videoRef.current.muted = false;
+              videoRef.current.volume = 1.0;
               await videoRef.current.play();
               setIsPlaying(true);
-              setNeedsUserTap(false);
+              setNeedsGesture(false);
             } catch {
-              // If fully blocked, show clean tap-to-play overlay
-              setNeedsUserTap(true);
+              // fallback
             }
           }
-        }
+          window.removeEventListener('click', handleFirstInteraction);
+          window.removeEventListener('touchstart', handleFirstInteraction);
+        };
+
+        window.addEventListener('click', handleFirstInteraction, { once: true });
+        window.addEventListener('touchstart', handleFirstInteraction, { once: true });
       }
     };
 
-    const timer = setTimeout(() => {
-      playVideo();
-    }, 150);
-
+    const timer = setTimeout(startVideoWithAudio, 100);
     return () => clearTimeout(timer);
   }, [isOpen]);
 
-  const handleManualPlay = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = false;
-      setIsMuted(false);
-      videoRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-          setNeedsUserTap(false);
-        })
-        .catch(() => {
-          if (videoRef.current) {
-            videoRef.current.muted = true;
-            setIsMuted(true);
-            videoRef.current.play();
-            setIsPlaying(true);
-            setNeedsUserTap(false);
-          }
-        });
+  const handleTapToPlay = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      video.muted = false;
+      video.volume = 1.0;
+      await video.play();
+      setIsPlaying(true);
+      setNeedsGesture(false);
+    } catch {
+      video.play();
+      setIsPlaying(true);
+      setNeedsGesture(false);
     }
   };
 
-  const handleVideoEnded = () => {
-    // Automatically transition to the scroll website when the video finishes
-    onOpenInvitation();
+  const handleTriggerFadeIntoSite = () => {
+    setIsFadingOut(true);
+    // Smooth transition into the wedding invitation site
+    setTimeout(() => {
+      onOpenInvitation();
+    }, 400);
   };
-
-  const toggleMute = (e: MouseEvent) => {
-    e.stopPropagation();
-    if (videoRef.current) {
-      const nextMuted = !videoRef.current.muted;
-      videoRef.current.muted = nextMuted;
-      setIsMuted(nextMuted);
-    }
-  };
-
-  if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="envelope-intro-window"
-        initial={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed inset-0 z-[100] bg-[#11100F] flex items-center justify-center overflow-hidden"
-      >
-        {/* Fullscreen Video Element */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          <video
-            ref={videoRef}
-            src="/media/Envelope.mp4"
-            playsInline
-            preload="auto"
-            onEnded={handleVideoEnded}
-            onClick={needsUserTap ? handleManualPlay : undefined}
-            className="w-full h-full object-contain max-h-screen"
-          />
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <motion.div
+          key="envelope-intro-modal"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: isFadingOut ? 0 : 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-0 z-[100] bg-[#11100F] flex items-center justify-center overflow-hidden select-none"
+        >
+          {/* Fullscreen Video Stage */}
+          <div 
+            className="relative w-full h-full flex items-center justify-center"
+            onClick={needsGesture ? handleTapToPlay : undefined}
+          >
+            <video
+              ref={videoRef}
+              src="/media/Envelope.mp4"
+              playsInline
+              autoPlay
+              preload="auto"
+              onEnded={handleTriggerFadeIntoSite}
+              onPlay={() => setIsPlaying(true)}
+              className={`w-full h-full object-contain max-h-screen transition-opacity duration-1000 ${
+                isFadingOut ? 'opacity-0 scale-[1.03]' : 'opacity-100'
+              }`}
+            />
 
-          {/* Minimalist Tap to Play Overlay if blocked by browser */}
-          {needsUserTap && !isPlaying && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={handleManualPlay}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer text-white gap-4 z-20"
-            >
+            {/* Gesture fallback overlay if browser blocks autoplay */}
+            {needsGesture && !isPlaying && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={handleTapToPlay}
+                className="absolute inset-0 bg-black/65 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer text-white gap-4 z-20"
+              >
+                <button
+                  type="button"
+                  className="w-20 h-20 rounded-full bg-[#FAF8F3] text-[#1C1A18] flex items-center justify-center shadow-2xl hover:scale-105 transition-transform"
+                >
+                  <Play className="w-8 h-8 fill-current ml-1" />
+                </button>
+                <div className="text-center space-y-1">
+                  <p className="font-serif text-sm tracking-[0.25em] uppercase text-[#FAF8F3]">
+                    Tap to Open Invitation
+                  </p>
+                  <p className="text-[10px] font-sans tracking-[0.2em] text-[#FAF8F3]/60 uppercase">
+                    Unsealing with sound
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Discreet Skip Button (No Sound Button as requested) */}
+            <div className="absolute bottom-6 right-6 pointer-events-none z-30">
               <button
                 type="button"
-                className="w-20 h-20 rounded-full bg-[#FAF8F3] text-[#1C1A18] flex items-center justify-center shadow-2xl hover:scale-105 transition-transform"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTriggerFadeIntoSite();
+                }}
+                className="pointer-events-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/10 text-[10px] font-sans tracking-[0.25em] uppercase transition-all cursor-pointer"
               >
-                <Play className="w-8 h-8 fill-current ml-1" />
+                <span>Skip to Invitation</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
-              <p className="font-serif text-sm tracking-[0.25em] uppercase text-[#FAF8F3]">
-                Tap to Open Invitation
-              </p>
-            </motion.div>
-          )}
-
-          {/* Discreet Controls in bottom corners */}
-          <div className="absolute bottom-6 inset-x-6 flex items-center justify-between pointer-events-none z-30">
-            {/* Audio Toggle */}
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="pointer-events-auto p-2.5 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/10 transition-all cursor-pointer"
-              title={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4" />
-              ) : (
-                <Volume2 className="w-4 h-4" />
-              )}
-            </button>
-
-            {/* Skip to scroll site */}
-            <button
-              type="button"
-              onClick={onOpenInvitation}
-              className="pointer-events-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/10 text-[10px] font-sans tracking-[0.25em] uppercase transition-all cursor-pointer"
-            >
-              <span>Skip to Invitation</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };

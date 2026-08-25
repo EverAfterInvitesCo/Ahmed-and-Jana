@@ -11,30 +11,29 @@ export const DateSection = ({ data }: DateSectionProps) => {
   const [calendarAdded, setCalendarAdded] = useState(false);
 
   const handleAddToCalendar = () => {
-    // Generate Google Calendar Link
-    // Start: 2027-01-21 18:00 (Cairo UTC+2 / 16:00 UTC) -> End: 2027-01-22 02:00
-    const title = encodeURIComponent(`Wedding of ${data.groom.firstName} & ${data.bride.firstName}`);
-    const details = encodeURIComponent(`We joyfully invite you to celebrate the marriage of ${data.groom.fullName} & ${data.bride.fullName}.\n\nVenue: ${data.venue.name}, ${data.venue.address}, ${data.venue.city}`);
-    const location = encodeURIComponent(`${data.venue.name}, ${data.venue.address}, ${data.venue.city}`);
-    const dates = '20270121T160000Z/20270122T000000Z';
+    // Generate RFC 5545 compliant iCalendar (.ics) file
+    // Directly opens in iOS Apple Calendar and Android Calendar apps
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//EverAfterInvites//AhmedAndJanaWedding//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:wedding-ahmed-jana-20270121@everafterinvites.com`,
+      `DTSTAMP:20260825T120000Z`,
+      `DTSTART:20270121T160000Z`,
+      `DTEND:20270122T000000Z`,
+      `SUMMARY:Wedding of ${data.groom.firstName} & ${data.bride.firstName}`,
+      `DESCRIPTION:Join Ahmed Abo El Ela & Jana Maghraby in celebrating their wedding day.`,
+      `LOCATION:Cairo, Egypt`,
+      'STATUS:CONFIRMED',
+      'SEQUENCE:0',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
 
-    const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
-    
-    // Also create .ics download
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//EverAfterInvites//AhmedAndJanaWedding//EN
-BEGIN:VEVENT
-UID:ahmed-jana-wedding-20270121@everafterinvites.com
-DTSTAMP:20260825T120000Z
-DTSTART:20270121T160000Z
-DTEND:20270122T000000Z
-SUMMARY:Wedding of ${data.groom.firstName} & ${data.bride.firstName}
-DESCRIPTION:Celebration of ${data.groom.fullName} & ${data.bride.fullName}
-LOCATION:${data.venue.name}, ${data.venue.address}, ${data.venue.city}
-END:VEVENT
-END:VCALENDAR`;
-
+    // Trigger instant native device download / calendar import
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -44,9 +43,6 @@ END:VCALENDAR`;
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-
-    // Open Google Calendar in new tab as well
-    window.open(googleCalUrl, '_blank', 'noopener,noreferrer');
 
     setCalendarAdded(true);
     setTimeout(() => setCalendarAdded(false), 4000);
