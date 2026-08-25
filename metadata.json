@@ -1,0 +1,6 @@
+{
+  "name": "Ahmed & Jana — Wedding Invitation",
+  "description": "Quiet luxury, modern editorial digital wedding invitation for Ahmed Abo El Ela & Jana Maghraby.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

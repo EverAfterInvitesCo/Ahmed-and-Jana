@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-ivory: #FAF8F3;
+    --color-champagne: #E8DED0;
+    --color-charcoal: #252320;
+    --color-gold: #B8A27A;
+    --color-taupe: #D8D0C5;
+  }
+
+  body {
+    background-color: #FAF8F3;
+    color: #252320;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Luxury Editorial Font utilities */
+.font-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-editorial {
+  font-family: 'Bodoni Moda', 'Cormorant Garamond', serif;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-arabic {
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+}
+
+/* Subtle stationery paper texture */
+.paper-grain {
+  background-color: #FAF8F3;
+  background-image: radial-gradient(rgba(37, 35, 32, 0.02) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.paper-texture-fine {
+  position: relative;
+}
+.paper-texture-fine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Subtle animated line */
+@keyframes drawLine {
+  0% {
+    width: 0%;
+    opacity: 0;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+.animate-draw-line {
+  animation: drawLine 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom scrollbar for minimalist quiet luxury */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF8F3;
+}
+::-webkit-scrollbar-thumb {
+  background: #D8D0C5;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8A27A;
+}
