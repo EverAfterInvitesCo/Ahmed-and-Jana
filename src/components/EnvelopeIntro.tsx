@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
-import envelopeVideo from '../assets/Envelope.mp4';
-import envelopePoster from '../assets/envelope_poster.jpg';
 
 interface EnvelopeIntroProps {
   isOpen: boolean;
@@ -62,10 +60,12 @@ export const EnvelopeIntro = ({
       if (videoRef.current && !hasEndedRef.current) {
         videoRef.current.muted = false;
         videoRef.current.volume = 1.0;
-        try {
-          await videoRef.current.play();
-        } catch {
-          // fallback
+        if (videoRef.current.paused) {
+          try {
+            await videoRef.current.play();
+          } catch {
+            // fallback
+          }
         }
       }
     };
@@ -73,12 +73,12 @@ export const EnvelopeIntro = ({
     window.addEventListener('click', handleFirstInteraction, { passive: true });
     window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
 
-    // Safety fallback: if video is blocked by aggressive browser shields, auto-proceed after 3.2s
+    // Safety fallback: if video stalls or takes too long to load, auto-proceed into site
     const safetyTimer = setTimeout(() => {
       if (!hasEndedRef.current) {
         handleTriggerFadeIntoSite();
       }
-    }, 3600);
+    }, 3800);
 
     return () => {
       video.removeEventListener('loadeddata', startPlaying);
@@ -129,17 +129,8 @@ export const EnvelopeIntro = ({
         >
           {/* Main Video Presentation Stage */}
           <div className="relative w-full h-full flex items-center justify-center p-0 md:p-4">
-            {/* Background Poster fallback to prevent black screen */}
-            <img
-              src={envelopePoster}
-              alt="Envelope"
-              className="absolute inset-0 m-auto w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain opacity-80 pointer-events-none"
-            />
-
             <video
               ref={videoRef}
-              src={envelopeVideo}
-              poster={envelopePoster}
               autoPlay
               playsInline
               muted
@@ -148,19 +139,15 @@ export const EnvelopeIntro = ({
               onTimeUpdate={handleTimeUpdate}
               onEnded={handleTriggerFadeIntoSite}
               onError={() => {
-                if (videoRef.current && videoRef.current.src !== '/Envelope.mp4') {
-                  videoRef.current.src = '/Envelope.mp4';
-                  videoRef.current.play().catch(() => {});
-                }
+                // If media cannot load, immediately transition so user is never stuck
+                handleTriggerFadeIntoSite();
               }}
-              className={`relative z-10 w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain transition-all duration-700 ${
+              className={`w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain transition-all duration-700 ${
                 isFadingOut ? 'opacity-0 scale-[1.02]' : 'opacity-100'
               }`}
             >
-              <source src={envelopeVideo} type="video/mp4" />
-              <source src="/Envelope.mp4" type="video/mp4" />
-              <source src="/envelope.mp4" type="video/mp4" />
               <source src="/media/Envelope.mp4" type="video/mp4" />
+              <source src="/Envelope.mp4" type="video/mp4" />
             </video>
 
             {/* Discreet Skip Button */}
