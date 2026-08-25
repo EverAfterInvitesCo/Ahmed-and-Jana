@@ -26,7 +26,7 @@ export const EnvelopeIntro = ({
 
     setTimeout(() => {
       onOpenInvitation();
-    }, 700);
+    }, 600);
   }, [onOpenInvitation]);
 
   useEffect(() => {
@@ -36,25 +36,19 @@ export const EnvelopeIntro = ({
     if (!video) return;
 
     video.loop = false;
+    video.muted = true; // start muted to guarantee instant autoplay in all browsers
 
-    // Direct playback attempt
-    const attemptPlay = async () => {
+    const startPlaying = async () => {
       try {
         await video.play();
-      } catch {
-        // If unmuted autoplay fails due to browser policy, start muted immediately so it plays without delay
-        video.muted = true;
-        try {
-          await video.play();
-        } catch {
-          // fallback
-        }
+      } catch (err) {
+        console.warn('Autoplay prevented, waiting for user tap', err);
       }
     };
 
-    attemptPlay();
+    startPlaying();
 
-    // User gesture handler: unmute on first tap anywhere
+    // User gesture handler: unmute on first tap anywhere on screen
     const handleFirstTap = async () => {
       if (videoRef.current && !hasEndedRef.current) {
         videoRef.current.muted = false;
@@ -82,7 +76,7 @@ export const EnvelopeIntro = ({
     const video = videoRef.current;
     if (!video || hasEndedRef.current) return;
 
-    // Detect when video reaches the end
+    // Detect when video reaches near the end
     if (video.duration && video.currentTime >= video.duration - 0.08) {
       handleTriggerFadeIntoSite();
     }
@@ -113,7 +107,7 @@ export const EnvelopeIntro = ({
           initial={{ opacity: 1 }}
           animate={{ opacity: isFadingOut ? 0 : 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-0 z-[100] bg-[#1a1816] flex items-center justify-center overflow-hidden select-none cursor-pointer"
           onClick={handleContainerTap}
         >
@@ -121,7 +115,7 @@ export const EnvelopeIntro = ({
           <div className="relative w-full h-full flex items-center justify-center bg-[#1a1816]">
             <video
               ref={videoRef}
-              poster="/media/envelope_poster.jpg"
+              poster="/envelope_poster.jpg"
               autoPlay
               playsInline
               muted
@@ -133,8 +127,10 @@ export const EnvelopeIntro = ({
                 isFadingOut ? 'opacity-0 scale-[1.02]' : 'opacity-100'
               }`}
             >
-              <source src="/media/Envelope.mp4" type="video/mp4" />
               <source src="/Envelope.mp4" type="video/mp4" />
+              <source src="/envelope.mp4" type="video/mp4" />
+              <source src="/media/Envelope.mp4" type="video/mp4" />
+              <source src="/media/envelope.mp4" type="video/mp4" />
             </video>
 
             {/* Discreet Skip Button */}
