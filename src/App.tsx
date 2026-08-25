@@ -162,6 +162,7 @@ export default function App() {
       {/* Intro Envelope Video Window with Smooth Crossfade */}
       <EnvelopeIntro
         isOpen={isEnvelopeOpen}
+        data={weddingData}
         onOpenInvitation={() => setIsEnvelopeOpen(false)}
       />
 

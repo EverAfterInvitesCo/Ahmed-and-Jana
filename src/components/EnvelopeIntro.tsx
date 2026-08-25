@@ -1,169 +1,75 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight } from 'lucide-react';
+import { WeddingData } from '../types';
 
-interface EnvelopeIntroProps {
-  isOpen: boolean;
+export interface EnvelopeIntroProps {
+  isOpen?: boolean;
+  data?: WeddingData;
   onOpenInvitation: () => void;
 }
 
-export const EnvelopeIntro = ({
-  isOpen,
+export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
+  isOpen = true,
   onOpenInvitation,
-}: EnvelopeIntroProps) => {
-  const [isFadingOut, setIsFadingOut] = useState(false);
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasEndedRef = useRef(false);
-
-  const handleTriggerFadeIntoSite = useCallback(() => {
-    if (hasEndedRef.current) return;
-    hasEndedRef.current = true;
-    setIsFadingOut(true);
-
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
-
-    setTimeout(() => {
-      onOpenInvitation();
-    }, 600);
-  }, [onOpenInvitation]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.loop = false;
-    video.muted = true;
-    video.defaultMuted = true;
-    video.setAttribute('playsinline', '');
-    video.setAttribute('webkit-playsinline', '');
-    video.setAttribute('muted', '');
-
-    const startPlaying = async () => {
-      try {
-        await video.play();
-      } catch {
-        video.muted = true;
-        video.play().catch(() => {});
-      }
-    };
-
-    startPlaying();
-    video.addEventListener('loadeddata', startPlaying);
-    video.addEventListener('canplay', startPlaying);
-
-    // Global listener for first click/tap to unmute and play with sound
-    const handleFirstInteraction = async () => {
-      if (videoRef.current && !hasEndedRef.current) {
-        videoRef.current.muted = false;
-        videoRef.current.volume = 1.0;
-        if (videoRef.current.paused) {
-          try {
-            await videoRef.current.play();
-          } catch {
-            // fallback
-          }
-        }
-      }
-    };
-
-    window.addEventListener('click', handleFirstInteraction, { passive: true });
-    window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
-
-    // Safety fallback: if video stalls or takes too long to load, auto-proceed into site
-    const safetyTimer = setTimeout(() => {
-      if (!hasEndedRef.current) {
-        handleTriggerFadeIntoSite();
-      }
-    }, 8000);
-
-    return () => {
-      video.removeEventListener('loadeddata', startPlaying);
-      video.removeEventListener('canplay', startPlaying);
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
-      clearTimeout(safetyTimer);
-    };
-  }, [isOpen, handleTriggerFadeIntoSite]);
-
-  const handleTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || hasEndedRef.current) return;
-
-    if (video.duration && video.currentTime >= video.duration - 0.08) {
-      handleTriggerFadeIntoSite();
-    }
-  };
-
-  const handleContainerTap = async () => {
-    const video = videoRef.current;
-    if (video && !hasEndedRef.current) {
-      video.muted = false;
-      video.volume = 1.0;
-      if (video.paused) {
-        try {
-          await video.play();
-        } catch {
-          // fallback
-        }
-      }
-    }
-  };
 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {isOpen && (
         <motion.div
-          key="envelope-intro-modal"
+          key="envelope-video-intro"
           initial={{ opacity: 1 }}
-          animate={{ opacity: isFadingOut ? 0 : 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[100] bg-[#121110] flex items-center justify-center overflow-hidden select-none cursor-pointer"
-          onClick={handleContainerTap}
+          exit={{ opacity: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-end bg-black text-white select-none overflow-hidden cursor-pointer"
+          onClick={onOpenInvitation}
         >
-          {/* Main Video Presentation Stage */}
-          <div className="relative w-full h-full flex items-center justify-center p-0 md:p-4">
+          {/* Full Frame Video filling the entire viewport */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
             <video
               ref={videoRef}
               src="/Envelope.mp4"
               autoPlay
-              playsInline
+              loop
               muted
-              preload="auto"
-              loop={false}
-              onTimeUpdate={handleTimeUpdate}
-              onEnded={handleTriggerFadeIntoSite}
-              className={`w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain transition-all duration-700 ${
-                isFadingOut ? 'opacity-0 scale-[1.02]' : 'opacity-100'
-              }`}
+              playsInline
+              className="w-full h-full object-cover sm:object-contain opacity-95 transition-transform duration-700"
             >
               <source src="/Envelope.mp4" type="video/mp4" />
-              <source src="/media/Envelope.mp4" type="video/mp4" />
             </video>
-
-            {/* Discreet Skip Button */}
-            <div className="absolute bottom-6 right-6 pointer-events-none z-30">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleTriggerFadeIntoSite();
-                }}
-                className="pointer-events-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/60 hover:bg-black/85 text-white/90 hover:text-white backdrop-blur-md border border-white/20 text-[10px] font-sans tracking-[0.25em] uppercase transition-all cursor-pointer shadow-xl"
-              >
-                <span>Skip to Invitation</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
+            {/* Subtle Vignette Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
           </div>
+
+          {/* Simple Open the Invitation Button */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="relative z-10 pb-10 sm:pb-14 px-4"
+          >
+            <motion.button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenInvitation();
+              }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="group flex items-center space-x-2.5 bg-[#FAF6EE] px-8 py-3.5 rounded-full border border-[#E1D4C2] shadow-2xl hover:bg-[#EFE4D3] transition-all cursor-pointer"
+            >
+              <span className="font-cormorant text-xs sm:text-sm tracking-[0.25em] uppercase text-[#4A3E33] font-bold">
+                OPEN THE INVITATION
+              </span>
+              <span className="text-[#8C7A68] text-xs transition-transform duration-300 group-hover:translate-x-0.5">✦</span>
+            </motion.button>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 };
+
+export const VideoIntroScreen = EnvelopeIntro;
