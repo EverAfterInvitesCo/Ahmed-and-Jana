@@ -1,48 +1,60 @@
 import { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Music } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { ambientMusicEngine } from '../utils/audioEngine';
 
 export const MusicPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
 
   const togglePlay = async () => {
-    setHasInteracted(true);
     const active = ambientMusicEngine.toggle();
     setIsPlaying(active);
   };
 
-  // Attempt gentle autoplay on user's first scroll/click if browser allows
+  // Automatically start ambient soundtrack when user interacts with the page (click, touch, scroll)
   useEffect(() => {
-    const handleFirstGesture = () => {
-      if (!hasInteracted) {
-        // We do not force audio until user taps the button or acknowledges
+    let started = false;
+
+    const startAudioSafely = async () => {
+      if (started) return;
+      try {
+        const success = await ambientMusicEngine.start();
+        if (success) {
+          started = true;
+          setIsPlaying(true);
+          cleanup();
+        }
+      } catch {
+        // Retry on next interaction
       }
     };
-    window.addEventListener('click', handleFirstGesture, { once: true });
-    return () => {
-      window.removeEventListener('click', handleFirstGesture);
+
+    const cleanup = () => {
+      window.removeEventListener('click', startAudioSafely);
+      window.removeEventListener('touchstart', startAudioSafely);
+      window.removeEventListener('scroll', startAudioSafely);
+      window.removeEventListener('keydown', startAudioSafely);
     };
-  }, [hasInteracted]);
+
+    // Try starting immediately
+    startAudioSafely();
+
+    // Attach listeners to trigger on any interaction
+    window.addEventListener('click', startAudioSafely, { passive: true });
+    window.addEventListener('touchstart', startAudioSafely, { passive: true });
+    window.addEventListener('scroll', startAudioSafely, { passive: true });
+    window.addEventListener('keydown', startAudioSafely, { passive: true });
+
+    return cleanup;
+  }, []);
 
   return (
     <div className="fixed bottom-6 right-6 z-40">
-      <div className="relative flex items-center gap-2">
-        {/* Subtle Tooltip on hover */}
-        {showTooltip && (
-          <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap bg-[#252320] text-[#FAF8F3] text-[10px] font-sans tracking-[0.2em] uppercase px-3 py-1.5 shadow-lg border border-[#FAF8F3]/10 pointer-events-none">
-            {isPlaying ? 'PAUSE AMBIENT SOUNDTRACK' : 'PLAY ROMANTIC PIANO & STRINGS'}
-          </div>
-        )}
-
+      <div className="relative flex items-center">
         {/* Discreet Floating Button */}
         <button
           type="button"
           onClick={togglePlay}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          aria-label={isPlaying ? 'Mute ambient soundtrack' : 'Play ambient soundtrack'}
+          aria-label={isPlaying ? 'Mute audio' : 'Play audio'}
           className="group flex items-center gap-2.5 px-3.5 py-2.5 bg-[#FAF8F3]/90 backdrop-blur-md border border-[#D8D0C5]/80 hover:border-[#B8A27A] text-[#252320] shadow-[0_4px_20px_rgba(37,35,32,0.06)] transition-all duration-300 rounded-full cursor-pointer"
         >
           {isPlaying ? (
