@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import envelopeVideo from '../assets/Envelope.mp4';
+import envelopePoster from '../assets/envelope_poster.jpg';
 
 interface EnvelopeIntroProps {
   isOpen: boolean;
@@ -36,47 +38,61 @@ export const EnvelopeIntro = ({
     if (!video) return;
 
     video.loop = false;
-    video.muted = true; // start muted to guarantee instant autoplay in all browsers
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.setAttribute('muted', '');
 
     const startPlaying = async () => {
       try {
         await video.play();
-      } catch (err) {
-        console.warn('Autoplay prevented, waiting for user tap', err);
+      } catch {
+        video.muted = true;
+        video.play().catch(() => {});
       }
     };
 
     startPlaying();
+    video.addEventListener('loadeddata', startPlaying);
+    video.addEventListener('canplay', startPlaying);
 
-    // User gesture handler: unmute on first tap anywhere on screen
-    const handleFirstTap = async () => {
+    // Global listener for first click/tap to unmute and play with sound
+    const handleFirstInteraction = async () => {
       if (videoRef.current && !hasEndedRef.current) {
         videoRef.current.muted = false;
         videoRef.current.volume = 1.0;
-        if (videoRef.current.paused) {
-          try {
-            await videoRef.current.play();
-          } catch {
-            // fallback
-          }
+        try {
+          await videoRef.current.play();
+        } catch {
+          // fallback
         }
       }
     };
 
-    window.addEventListener('click', handleFirstTap, { passive: true });
-    window.addEventListener('touchstart', handleFirstTap, { passive: true });
+    window.addEventListener('click', handleFirstInteraction, { passive: true });
+    window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
+
+    // Safety fallback: if video is blocked by aggressive browser shields, auto-proceed after 3.2s
+    const safetyTimer = setTimeout(() => {
+      if (!hasEndedRef.current) {
+        handleTriggerFadeIntoSite();
+      }
+    }, 3600);
 
     return () => {
-      window.removeEventListener('click', handleFirstTap);
-      window.removeEventListener('touchstart', handleFirstTap);
+      video.removeEventListener('loadeddata', startPlaying);
+      video.removeEventListener('canplay', startPlaying);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+      clearTimeout(safetyTimer);
     };
-  }, [isOpen]);
+  }, [isOpen, handleTriggerFadeIntoSite]);
 
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video || hasEndedRef.current) return;
 
-    // Detect when video reaches near the end
     if (video.duration && video.currentTime >= video.duration - 0.08) {
       handleTriggerFadeIntoSite();
     }
@@ -107,15 +123,23 @@ export const EnvelopeIntro = ({
           initial={{ opacity: 1 }}
           animate={{ opacity: isFadingOut ? 0 : 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[100] bg-[#1a1816] flex items-center justify-center overflow-hidden select-none cursor-pointer"
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-0 z-[100] bg-[#121110] flex items-center justify-center overflow-hidden select-none cursor-pointer"
           onClick={handleContainerTap}
         >
-          {/* Fullscreen Video Stage */}
-          <div className="relative w-full h-full flex items-center justify-center bg-[#1a1816]">
+          {/* Main Video Presentation Stage */}
+          <div className="relative w-full h-full flex items-center justify-center p-0 md:p-4">
+            {/* Background Poster fallback to prevent black screen */}
+            <img
+              src={envelopePoster}
+              alt="Envelope"
+              className="absolute inset-0 m-auto w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain opacity-80 pointer-events-none"
+            />
+
             <video
               ref={videoRef}
-              poster="/envelope_poster.jpg"
+              src={envelopeVideo}
+              poster={envelopePoster}
               autoPlay
               playsInline
               muted
@@ -123,14 +147,20 @@ export const EnvelopeIntro = ({
               loop={false}
               onTimeUpdate={handleTimeUpdate}
               onEnded={handleTriggerFadeIntoSite}
-              className={`w-full h-full object-contain max-h-screen transition-all duration-700 ${
+              onError={() => {
+                if (videoRef.current && videoRef.current.src !== '/Envelope.mp4') {
+                  videoRef.current.src = '/Envelope.mp4';
+                  videoRef.current.play().catch(() => {});
+                }
+              }}
+              className={`relative z-10 w-auto h-full max-h-screen md:max-h-[92vh] max-w-full aspect-[9/16] object-contain transition-all duration-700 ${
                 isFadingOut ? 'opacity-0 scale-[1.02]' : 'opacity-100'
               }`}
             >
+              <source src={envelopeVideo} type="video/mp4" />
               <source src="/Envelope.mp4" type="video/mp4" />
               <source src="/envelope.mp4" type="video/mp4" />
               <source src="/media/Envelope.mp4" type="video/mp4" />
-              <source src="/media/envelope.mp4" type="video/mp4" />
             </video>
 
             {/* Discreet Skip Button */}
@@ -141,7 +171,7 @@ export const EnvelopeIntro = ({
                   e.stopPropagation();
                   handleTriggerFadeIntoSite();
                 }}
-                className="pointer-events-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/50 hover:bg-black/80 text-white/90 hover:text-white backdrop-blur-md border border-white/15 text-[10px] font-sans tracking-[0.25em] uppercase transition-all cursor-pointer shadow-lg"
+                className="pointer-events-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/60 hover:bg-black/85 text-white/90 hover:text-white backdrop-blur-md border border-white/20 text-[10px] font-sans tracking-[0.25em] uppercase transition-all cursor-pointer shadow-xl"
               >
                 <span>Skip to Invitation</span>
                 <ArrowRight className="w-3 h-3" />

@@ -10,11 +10,11 @@ export const MusicPlayer = () => {
     setIsPlaying(active);
   };
 
-  // Automatically start ambient soundtrack when user interacts with the page (click, touch, scroll)
+  // Start ambient soundtrack on first user interaction gesture (click, touch, scroll, keydown)
   useEffect(() => {
     let started = false;
 
-    const startAudioSafely = async () => {
+    const startAudioOnGesture = async () => {
       if (started) return;
       try {
         const success = await ambientMusicEngine.start();
@@ -24,25 +24,22 @@ export const MusicPlayer = () => {
           cleanup();
         }
       } catch {
-        // Retry on next interaction
+        // Will retry on next interaction
       }
     };
 
     const cleanup = () => {
-      window.removeEventListener('click', startAudioSafely);
-      window.removeEventListener('touchstart', startAudioSafely);
-      window.removeEventListener('scroll', startAudioSafely);
-      window.removeEventListener('keydown', startAudioSafely);
+      window.removeEventListener('click', startAudioOnGesture);
+      window.removeEventListener('touchstart', startAudioOnGesture);
+      window.removeEventListener('scroll', startAudioOnGesture);
+      window.removeEventListener('keydown', startAudioOnGesture);
     };
 
-    // Try starting immediately
-    startAudioSafely();
-
-    // Attach listeners to trigger on any interaction
-    window.addEventListener('click', startAudioSafely, { passive: true });
-    window.addEventListener('touchstart', startAudioSafely, { passive: true });
-    window.addEventListener('scroll', startAudioSafely, { passive: true });
-    window.addEventListener('keydown', startAudioSafely, { passive: true });
+    // Attach listeners to trigger on any interaction without throwing AudioContext warnings
+    window.addEventListener('click', startAudioOnGesture, { passive: true });
+    window.addEventListener('touchstart', startAudioOnGesture, { passive: true });
+    window.addEventListener('scroll', startAudioOnGesture, { passive: true });
+    window.addEventListener('keydown', startAudioOnGesture, { passive: true });
 
     return cleanup;
   }, []);
