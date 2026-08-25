@@ -11,57 +11,97 @@ export const DateSection = ({ data }: DateSectionProps) => {
   const [calendarAdded, setCalendarAdded] = useState(false);
 
   const handleAddToCalendar = () => {
+    const now = new Date();
+
+    // Generate current timestamp for the iCalendar file
+    const dtStamp = now
+      .toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\.\d{3}/, '');
+
+    const groomName = `${data.groom.firstName} ${
+      data.groom.lastName || ''
+    }`.trim();
+
+    const brideName = `${data.bride.firstName} ${
+      data.bride.lastName || ''
+    }`.trim();
+
     // Generate RFC 5545 compliant iCalendar (.ics) file
-    // Directly opens in iOS Apple Calendar and Android Calendar apps
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//EverAfterInvites//AhmedAndJanaWedding//EN',
+      'PRODID:-//EverAfterInvites//Wedding Invitation//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
+
       'BEGIN:VEVENT',
-      `UID:wedding-ahmed-jana-20270121@everafterinvites.com`,
-      `DTSTAMP:20260825T120000Z`,
-      `DTSTART:20270121T160000Z`,
-      `DTEND:20270122T000000Z`,
+
+      `UID:wedding-${data.groom.firstName.toLowerCase()}-${data.bride.firstName.toLowerCase()}-20270121@everafterinvites.com`,
+
+      `DTSTAMP:${dtStamp}`,
+
+      // Wedding date and time — Cairo local time
+      'DTSTART;TZID=Africa/Cairo:20270121T180000',
+      'DTEND;TZID=Africa/Cairo:20270122T000000',
+
       `SUMMARY:Wedding of ${data.groom.firstName} & ${data.bride.firstName}`,
-      `DESCRIPTION:Join Ahmed Abo El Ela & Jana Maghraby in celebrating their wedding day.`,
-      `LOCATION:Cairo, Egypt`,
+
+      `DESCRIPTION:Join ${groomName} & ${brideName} in celebrating their wedding day.`,
+
+      'LOCATION:Cairo, Egypt',
+
       'STATUS:CONFIRMED',
       'SEQUENCE:0',
+
       'END:VEVENT',
       'END:VCALENDAR',
     ].join('\r\n');
 
-    // Trigger instant native device download / calendar import
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    // Create the .ics file
+    const blob = new Blob([icsContent], {
+      type: 'text/calendar;charset=utf-8',
+    });
+
     const url = window.URL.createObjectURL(blob);
+
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'Ahmed_and_Jana_Wedding_2027.ics');
+    link.download = `${data.groom.firstName}_and_${data.bride.firstName}_Wedding.ics`;
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
     window.URL.revokeObjectURL(url);
 
+    // Show confirmation
     setCalendarAdded(true);
-    setTimeout(() => setCalendarAdded(false), 4000);
+
+    setTimeout(() => {
+      setCalendarAdded(false);
+    }, 4000);
   };
 
   return (
-    <section 
+    <section
       id="date-highlight"
       className="min-h-[85vh] md:min-h-screen flex flex-col justify-center items-center text-center px-6 py-28 sm:py-36 md:py-44 bg-[#FAF8F3] paper-grain relative overflow-hidden"
     >
       <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
+
         {/* Enormous Serif Typography */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{
+            duration: 1.6,
+            ease: [0.16, 1, 0.3, 1],
+          }}
           className="space-y-2 sm:space-y-4 select-none"
         >
+
           {/* Day number */}
           <div className="leading-none">
             <span className="text-8xl sm:text-9xl md:text-[13rem] lg:text-[15rem] font-serif font-light text-[#252320] tracking-tight block">
@@ -96,7 +136,10 @@ export const DateSection = ({ data }: DateSectionProps) => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 1.2, delay: 0.3 }}
+          transition={{
+            duration: 1.2,
+            delay: 0.3,
+          }}
           className="mt-16 sm:mt-20 flex flex-col items-center"
         >
           <button
@@ -109,11 +152,15 @@ export const DateSection = ({ data }: DateSectionProps) => {
             ) : (
               <Calendar className="w-3.5 h-3.5 text-[#252320]/60 group-hover:text-[#B8A27A] transition-colors stroke-1" />
             )}
+
             <span className="text-[10px] sm:text-[11px] font-sans tracking-[0.25em] text-[#252320] uppercase font-medium">
-              {calendarAdded ? 'ADDED TO CALENDAR' : 'SAVE THE DATE'}
+              {calendarAdded
+                ? 'ADDED TO CALENDAR'
+                : 'SAVE THE DATE'}
             </span>
           </button>
         </motion.div>
+
       </div>
     </section>
   );
