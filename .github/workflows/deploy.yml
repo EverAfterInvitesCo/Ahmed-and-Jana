@@ -1,7 +1,7 @@
 name: Deploy React App
 
 on:
-  # Triggers the workflow on push or pull request events to the "main" branch
+  # Triggers the workflow on push to the "main" branch
   push:
     branches: ["main"]
 
@@ -14,7 +14,7 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued
+# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -29,22 +29,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build project
         run: npm run build
-        # If your environment variables are needed at build time, pass them like this:
-        # env:
-        #   VITE_SOME_KEY: ${{ secrets.VITE_SOME_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist # Change to 'build' if using Create React App instead of Vite
+          path: ./dist
 
   deploy:
     environment:
