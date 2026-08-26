@@ -1,20 +1,15 @@
 name: Deploy React App
 
 on:
-  # Triggers the workflow on push to the "main" branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -30,7 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          # Removed cache: 'npm' so it doesn't look for a lockfile
 
       - name: Install dependencies
         run: npm install
