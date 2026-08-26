@@ -14,10 +14,9 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Force play programmatically on mount to bypass strict browser policies
   useEffect(() => {
     if (isOpen && videoRef.current) {
-      videoRef.current.play().catch((error) => {
+      videoRef.current.play().catch((error: unknown) => {
         console.warn("Autoplay was prevented by the browser:", error);
       });
     }
@@ -42,7 +41,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
               autoPlay
               loop
               muted
-              playsInline // Note the capital 'I' for React JSX
+              playsInline
               preload="auto"
               className="w-full h-full object-cover sm:object-contain opacity-95 transition-transform duration-700"
             >
@@ -62,7 +61,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
           >
             <motion.button
               type="button"
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.stopPropagation();
                 onOpenInvitation();
               }}
