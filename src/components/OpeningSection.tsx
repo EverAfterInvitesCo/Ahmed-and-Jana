@@ -7,11 +7,8 @@ interface OpeningSectionProps {
 
 export const OpeningSection = ({ data }: OpeningSectionProps) => {
   return (
-    <motion.section 
+    <section 
       id="opening"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
       className="relative min-h-[92vh] md:min-h-screen flex flex-col justify-between items-center text-center px-6 py-16 md:py-24 paper-grain overflow-hidden"
     >
       {/* Subtle fine corner border accents */}
@@ -24,7 +21,7 @@ export const OpeningSection = ({ data }: OpeningSectionProps) => {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
         className="pt-4 md:pt-8"
       >
         <span className="text-[11px] md:text-xs font-sans tracking-[0.35em] text-[#B8A27A] uppercase font-medium">
@@ -37,7 +34,7 @@ export const OpeningSection = ({ data }: OpeningSectionProps) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center select-none"
         >
           {/* Groom Name */}
@@ -62,7 +59,7 @@ export const OpeningSection = ({ data }: OpeningSectionProps) => {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.6, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="mt-8 md:mt-12 flex flex-col items-center"
         >
           <p className="text-xs sm:text-sm md:text-base font-sans tracking-[0.4em] text-[#252320]/75 uppercase font-normal">
@@ -78,7 +75,7 @@ export const OpeningSection = ({ data }: OpeningSectionProps) => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.8, delay: 1.0 }}
+        transition={{ duration: 1.8, delay: 0.9 }}
         className="pb-2 md:pb-6 flex flex-col items-center gap-3 cursor-pointer"
         onClick={() => {
           document.getElementById('invitation')?.scrollIntoView({ behavior: 'smooth' });
@@ -89,6 +86,6 @@ export const OpeningSection = ({ data }: OpeningSectionProps) => {
         </span>
         <div className="w-[1px] h-8 bg-gradient-to-b from-[#B8A27A]/70 to-transparent animate-pulse" />
       </motion.div>
-    </motion.section>
+    </section>
   );
 };
