@@ -30,14 +30,14 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
           <div className="absolute inset-0 w-full h-full overflow-hidden">
             <video
               ref={videoRef}
-              src="/Envelope.mp4"
+              src="/open.mp4"
               autoPlay
               loop
               muted
               playsInline
               className="w-full h-full object-cover sm:object-contain opacity-95 transition-transform duration-700"
             >
-              <source src="/Envelope.mp4" type="video/mp4" />
+              <source src="/open.mp4" type="video/mp4" />
             </video>
             {/* Subtle Vignette Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
