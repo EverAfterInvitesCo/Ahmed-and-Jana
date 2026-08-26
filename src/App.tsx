@@ -22,6 +22,39 @@ export default function App() {
   // Envelope intro overlay state: active when first visiting
   const [isEnvelopeOpen, setIsEnvelopeOpen] = useState(true);
 
+  // Global audio autoplay trigger helper
+  useEffect(() => {
+    const handleAutoPlayAudio = () => {
+      const audioElements = document.querySelectorAll('audio');
+      audioElements.forEach((audio) => {
+        audio.play().catch(() => {
+          // Handled silently if browser policy restricts it until interaction
+        });
+      });
+    };
+
+    // Try immediately on load
+    handleAutoPlayAudio();
+
+    // Also attach a one-time global listener to guarantee soundtrack unlock on any initial movement
+    const unlockHandler = () => {
+      handleAutoPlayAudio();
+      window.removeEventListener('click', unlockHandler);
+      window.removeEventListener('touchstart', unlockHandler);
+      window.removeEventListener('keydown', unlockHandler);
+    };
+
+    window.addEventListener('click', unlockHandler);
+    window.addEventListener('touchstart', unlockHandler);
+    window.addEventListener('keydown', unlockHandler);
+
+    return () => {
+      window.removeEventListener('click', unlockHandler);
+      window.removeEventListener('touchstart', unlockHandler);
+      window.removeEventListener('keydown', unlockHandler);
+    };
+  }, []);
+
   const [weddingData, setWeddingData] = useState<WeddingData>(() => {
     try {
       const saved = localStorage.getItem('wedding_invitation_data');
