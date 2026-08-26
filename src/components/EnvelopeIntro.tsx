@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { WeddingData } from '../types';
 
@@ -13,6 +13,15 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
   onOpenInvitation,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Force play programmatically on mount to bypass strict browser policies
+  useEffect(() => {
+    if (isOpen && videoRef.current) {
+      videoRef.current.play().catch((error) => {
+        console.warn("Autoplay was prevented by the browser:", error);
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -30,14 +39,15 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
           <div className="absolute inset-0 w-full h-full overflow-hidden">
             <video
               ref={videoRef}
-              src="/open.mp4"
               autoPlay
               loop
               muted
-              playsInline
+              playsInline // Note the capital 'I' for React JSX
+              preload="auto"
               className="w-full h-full object-cover sm:object-contain opacity-95 transition-transform duration-700"
             >
               <source src="/open.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
             </video>
             {/* Subtle Vignette Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
