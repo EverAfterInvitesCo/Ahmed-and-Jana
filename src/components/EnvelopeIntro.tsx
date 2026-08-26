@@ -38,6 +38,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
           <div className="absolute inset-0 w-full h-full overflow-hidden">
             <video
               ref={videoRef}
+              src={`${import.meta.env.BASE_URL}open.mp4`}
               autoPlay
               loop
               muted
@@ -45,7 +46,7 @@ export const EnvelopeIntro: React.FC<EnvelopeIntroProps> = ({
               preload="auto"
               className="w-full h-full object-cover sm:object-contain opacity-95 transition-transform duration-700"
             >
-              <source src="/open.mp4" type="video/mp4" />
+              <source src={`${import.meta.env.BASE_URL}open.mp4`} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
             {/* Subtle Vignette Gradient Overlay */}
